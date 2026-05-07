@@ -1,8 +1,11 @@
 const {
   calculate,
   formatUsage,
+  modulo,
   normalizeOperation,
   parseNumber,
+  power,
+  squareRoot,
 } = require('../calculator');
 
 describe('calculate', () => {
@@ -11,6 +14,10 @@ describe('calculate', () => {
     ['10 - 4', '-', 10, 4, 6],
     ['45 * 2', '*', 45, 2, 90],
     ['20 / 5', '/', 20, 5, 4],
+    ['10 % 3', '%', 10, 3, 1],
+    ['5 % 2', '%', 5, 2, 1],
+    ['2 ^ 4', '^', 2, 4, 16],
+    ['2 ^ 3', '^', 2, 3, 8],
   ])('returns the expected result for %s', (_, operation, left, right, expected) => {
     expect(calculate(operation, left, right)).toBe(expected);
   });
@@ -23,8 +30,20 @@ describe('calculate', () => {
     ['x', 9, 3, 27],
     ['×', 8, 4, 32],
     ['÷', 20, 4, 5],
+    ['modulo', 17, 5, 2],
+    ['power', 3, 3, 27],
+    ['**', 4, 2, 16],
   ])('supports "%s" operations', (operation, left, right, expected) => {
     expect(calculate(operation, left, right)).toBe(expected);
+  });
+
+  test.each([
+    ['squareRoot', 81, 9],
+    ['sqrt', 49, 7],
+    ['√', 64, 8],
+    ['√', 16, 4],
+  ])('supports unary "%s" operations', (operation, value, expected) => {
+    expect(calculate(operation, value)).toBe(expected);
   });
 
   test('supports negative and decimal operands', () => {
@@ -33,7 +52,7 @@ describe('calculate', () => {
   });
 
   test('rejects unsupported operations', () => {
-    expect(() => calculate('power', 2, 3)).toThrow('Unsupported operation: power.');
+    expect(() => calculate('unknown', 2, 3)).toThrow('Unsupported operation: unknown.');
   });
 
   test.each([
@@ -42,6 +61,21 @@ describe('calculate', () => {
     ['÷'],
   ])('rejects division by zero for "%s"', (operation) => {
     expect(() => calculate(operation, 10, 0)).toThrow('Division by zero is not allowed.');
+  });
+
+  test.each([
+    ['modulo'],
+    ['%'],
+  ])('rejects modulo by zero for "%s"', (operation) => {
+    expect(() => calculate(operation, 10, 0)).toThrow('Modulo by zero is not allowed.');
+  });
+
+  test.each([
+    ['squareRoot'],
+    ['sqrt'],
+    ['√'],
+  ])('rejects square root of a negative number for "%s"', (operation) => {
+    expect(() => calculate(operation, -9)).toThrow('Square root of a negative number is not allowed.');
   });
 });
 
@@ -57,6 +91,14 @@ describe('normalizeOperation', () => {
     ['DIVIDE', 'divide'],
     ['/', 'divide'],
     ['÷', 'divide'],
+    ['MODULO', 'modulo'],
+    ['%', 'modulo'],
+    ['POWER', 'power'],
+    ['^', 'power'],
+    ['**', 'power'],
+    ['squareRoot', 'squareRoot'],
+    ['sqrt', 'squareRoot'],
+    ['√', 'squareRoot'],
   ])('normalizes "%s" to "%s"', (input, expected) => {
     expect(normalizeOperation(input)).toBe(expected);
   });
@@ -85,16 +127,56 @@ describe('formatUsage', () => {
   test('returns usage guidance with the supported operations', () => {
     expect(formatUsage()).toBe(
       [
-        'Usage: npm start -- <operation> <left> <right>',
+        'Usage:',
+        '  npm start -- <operation> <value>',
+        '  npm start -- <operation> <left> <right>',
         '',
         'Supported operations:',
         '  add or +        Addition',
         '  subtract or -   Subtraction',
         '  multiply or *   Multiplication',
         '  divide or /     Division',
+        '  modulo or %     Remainder',
+        '  power or ^      Exponentiation',
+        '  squareRoot      Square root',
+        '  sqrt or √       Square root',
         '',
         'Example: npm start -- add 5 7',
       ].join('\n'),
     );
+  });
+});
+
+describe('modulo', () => {
+  test('returns the remainder of division', () => {
+    expect(modulo(10, 3)).toBe(1);
+  });
+
+  test('matches the extended operations example', () => {
+    expect(modulo(5, 2)).toBe(1);
+  });
+});
+
+describe('power', () => {
+  test('raises the base to the exponent', () => {
+    expect(power(2, 5)).toBe(32);
+  });
+
+  test('matches the extended operations example', () => {
+    expect(power(2, 3)).toBe(8);
+  });
+});
+
+describe('squareRoot', () => {
+  test('returns the square root of a number', () => {
+    expect(squareRoot(25)).toBe(5);
+  });
+
+  test('matches the extended operations example', () => {
+    expect(squareRoot(16)).toBe(4);
+  });
+
+  test('rejects negative numbers', () => {
+    expect(() => squareRoot(-1)).toThrow('Square root of a negative number is not allowed.');
   });
 });
