@@ -99,9 +99,15 @@ function getOperationConfig(operation) {
 }
 
 function parseNumber(value, label) {
-  const parsedValue = Number(value);
+  const normalizedValue = typeof value === 'string' ? value.trim() : value;
 
-  if (Number.isNaN(parsedValue)) {
+  if (normalizedValue === '') {
+    throw new Error(`${label} must be a valid number.`);
+  }
+
+  const parsedValue = Number(normalizedValue);
+
+  if (!Number.isFinite(parsedValue)) {
     throw new Error(`${label} must be a valid number.`);
   }
 
