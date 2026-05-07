@@ -114,18 +114,20 @@ function parseNumber(value, label) {
   return parsedValue;
 }
 
-function calculate(operation, left, right) {
+function calculate(operation, ...operands) {
   const config = getOperationConfig(operation);
 
   if (!config) {
     throw new Error(`Unsupported operation: ${operation}.`);
   }
 
-  if (config.arity === 1) {
-    return config.execute(left);
+  if (operands.length !== config.arity) {
+    throw new Error(
+      `Operation "${config.name}" expects ${config.arity} operand(s), but received ${operands.length}.`
+    );
   }
 
-  return config.execute(left, right);
+  return config.execute(...operands);
 }
 
 function formatUsage() {
